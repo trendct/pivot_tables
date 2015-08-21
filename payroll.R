@@ -34,10 +34,18 @@ library(stringr)
 payroll$first_name <- str_to_title(payroll$first_name)
 
 # Name guessing
-install.packages("gender")
-library(gender)
+# install.packages("gender")
+#library(gender)
 
-payroll_gender<- gender(payroll$first_name)
+names <- payroll$first_name
+names <- subset(names, !duplicated(names))
+
+# This will take a long time to process
+payroll_gender <- gender(names)
+
+# So we have a list, but we need to turn it into a dataframe
+payroll_gender <- do.call(rbind, lapply(payroll_gender, data.frame, stringsAsFactors=FALSE))
+
 
 payroll_gender <- payroll_gender[c("name", "gender")]
 colnames(payroll_gender) <- c("first_name", "gender")
@@ -45,7 +53,7 @@ colnames(payroll_gender) <- c("first_name", "gender")
 payroll_gender <- subset(payroll_gender, !duplicated(payroll_gender$first_name))
 
 library(dplyr)
-payroll <- left_join(payroll, payroll_gender2)
+payroll <- left_join(payroll, payroll_gender)
 payroll$gender[is.na(payroll$gender)] <- "unknown"
 
 table(payroll$gender)
@@ -78,12 +86,15 @@ median_pay <- data.frame(median_pay)
 
 gender<- cbind(gender, median_pay)
 
-write.csv(gender, "gender.csv")
+# write.csv(gender, "gender.csv")
 
 # How about department from department? 
 # Same as above, but add another variable
 gender_dept <- data.frame(table(payroll$AGENCY_DESCRIPTION, payroll$gender))
 colnames(gender_dept) <- c("department", "gender", "count")
+
+# bring in tidyr library
+library(tidyr)
 gender_dept <- spread(gender_dept, gender, count)
 
 # Ok, average pay by gender in each department? 
@@ -133,9 +144,9 @@ head(gender_dept$median.diff[order(-gender_dept$median.diff)], 5)
 head(gender_dept$median.diff[order(gender_dept$median.diff)], 5)
 
 # Write to csv
-write.csv(gender_dept, "gender_dept.csv")
+# write.csv(gender_dept, "gender_dept.csv")
 
-
+Pay by gender and department Connecticut
 # Now for something completely quicker using pipes and dplyr
 
 # As a whole
